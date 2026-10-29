@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "CARSHERS Customer",
+    "slug": "carshers-customer",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.carshers.customer",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#071426"
+      }
+    },
+    "extra": {
+      "apiBaseUrl": "https://REPLACE-WITH-YOUR-API.example"
+    }
+  }
+}
