@@ -2,13 +2,13 @@
   "expo": {
     "name": "CARSHERS Employee",
     "slug": "carshers-employee",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",
     "android": {
       "package": "com.carshers.employee",
-      "versionCode": 101,
+      "versionCode": 102,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#071426"
