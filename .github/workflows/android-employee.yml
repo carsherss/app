@@ -65,7 +65,7 @@ jobs:
       # Generated debug-style signing is for internal testing only. Production
       # upload-key signing via GitHub Secrets is intentionally deferred to v0.2.0.
       - name: Upload APK and checksum
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: carshers-employee-0.1.1-release-apk
           path: |
