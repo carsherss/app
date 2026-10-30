@@ -1,19 +1,29 @@
 {
   "expo": {
-    "name": "CARSHERS Worker",
-    "slug": "carshers-worker",
-    "version": "0.1.0",
+    "name": "CARSHERS Employee",
+    "slug": "carshers-employee",
+    "version": "0.1.1",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
     "android": {
       "package": "com.carshers.employee",
-      "versionCode": 1,
+      "versionCode": 101,
       "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#071426"
       }
     },
-    "extra": {
-      "apiBaseUrl": "https://REPLACE-WITH-YOUR-API.example"
-    }
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#071426"
+        }
+      ]
+    ]
   }
 }

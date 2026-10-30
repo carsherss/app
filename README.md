@@ -1,86 +1,120 @@
-# CARSHERS — Monorepo Starter
+<p align="center"><img src="docs/assets/hero.svg" alt="CARSHERS — Cleaner Rides, Brighter Days" width="100%"></p>
 
-Customer Android app, employee Android app, CRM/website, and shared API for a doorstep car and bike washing service.
+<p align="center">
+<a href="https://github.com/carsherss/app/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/carsherss/app/ci.yml?branch=main&label=CI" alt="CI"></a>
+<a href="https://github.com/carsherss/app/actions/workflows/android-customer.yml"><img src="https://img.shields.io/github/actions/workflow/status/carsherss/app/android-customer.yml?branch=main&label=Customer%20Android" alt="Customer Android"></a>
+<a href="https://github.com/carsherss/app/actions/workflows/android-employee.yml"><img src="https://img.shields.io/github/actions/workflow/status/carsherss/app/android-employee.yml?branch=main&label=Employee%20Android" alt="Employee Android"></a>
+</p>
 
-> This is a development scaffold, not a production-ready booking or payment system. The initial apps are shells; authentication, booking rules, notifications, payment integrations, and production deployment are follow-up milestones.
+# CARSHERS
+Doorstep car and bike washing platform. **v0.1.1 targets two standalone Android release APKs that launch without Metro.**
+
+> **Status:** v0.1.1 In progress. Complete only after CI checks and physical-device tests.
+
+## Assets
+- Logo placeholder: `docs/assets/logo.png` (add approved logo).
+- Screenshots placeholder: `docs/assets/screenshots/` (add real device screenshots after testing).
+- Static hero: `docs/assets/hero.svg`.
+
+## Feature status
+| Feature | Status |
+|---|---|
+| Customer standalone APK | v0.1.1 done-when-verified |
+| Employee standalone APK | v0.1.1 done-when-verified |
+| Bundle/signature/package/version checks | v0.1.1 done-when-verified |
+| Physical-device and airplane-mode launch | Planned / owner test required |
+| Registration, vehicles, services, booking | Planned |
+| Employee job assignment | Planned |
+| Photos, notifications, payments | Planned |
+| Backend and CRM production features | Planned |
+
+## Architecture
+```mermaid
+flowchart TD
+ C[Customer App] --> API[FastAPI Backend]
+ E[Employee App] --> API
+ CRM[CRM Dashboard] --> API
+ API --> DB[(PostgreSQL)]
+```
+
+```mermaid
+stateDiagram-v2
+ [*] --> requested
+ requested --> confirmed
+ confirmed --> assigned
+ assigned --> en_route
+ en_route --> in_progress
+ in_progress --> completed
+ requested --> cancelled
+ confirmed --> cancelled
+```
+These diagrams describe intended architecture and a future lifecycle; they are not implemented features in v0.1.1.
 
 ## Repository layout
-
-- `apps/customer` — Expo / React Native customer app
-- `apps/employee` — Expo / React Native employee app
-- `apps/crm` — Next.js CRM and public website shell
-- `apps/api` — FastAPI API starter
-- `.github/workflows` — CI and Android APK workflows
-- `docs` — architecture, security, operations
-
-## Prerequisites
-
-- Node.js 22 LTS (or another version supported by the chosen Expo SDK)
-- npm
-- Python 3.11+
-- Git
-- Android phone for APK testing
-- GitHub repository access with Actions enabled
-
-## Local development
-
-### API
-
-```bash
-cd apps/api
-python -m venv .venv
-# Linux/macOS:
-source .venv/bin/activate
-# Windows PowerShell:
-# .venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
-uvicorn app.main:app --reload
+```text
+.github/workflows/   Existing CI plus app-specific Android workflows
+apps/customer/       Customer Expo app
+apps/employee/       Employee Expo app
+apps/crm/            Existing CRM; out of scope
+apps/api/            Existing API; out of scope
+scripts/             Bootstrap and APK verification
+docs/                ADRs, release and device testing
+BRAIN.md             Engineering source of truth
+ROADMAP.md           Versioned milestones
+VERIFY.md            Owner verification record
 ```
 
-Open `http://127.0.0.1:8000/health` and `http://127.0.0.1:8000/docs`.
+## Technology baseline
+| Component | Baseline | Official source checked 2026-10-30 |
+|---|---|---|
+| Expo | SDK 58, package range `~58.0.0` | https://docs.expo.dev/versions/latest/ |
+| React Native | 0.88 | Same Expo compatibility table |
+| React | 19.3.0 | Same Expo compatibility table |
+| Node | 22.13.x minimum | Same Expo compatibility table |
+| Java | Temurin JDK 17 selected for CI | Workflow configuration; owner must validate |
 
-### CRM
+The exact Expo patch and transitive dependency resolution are captured in owner-generated lockfiles.
 
+## Prerequisites and bootstrap
+Node.js 22.13.x+, npm, Git; JDK 17 and Android SDK/build-tools for local native builds. From repository root:
 ```bash
-cd apps/crm
-npm install
-npm run dev
+bash scripts/bootstrap-mobile.sh
 ```
+Review and commit both `package.json` and `package-lock.json` files. Do not commit generated `android/` folders.
 
-Open `http://localhost:3000`.
-
-### Customer app
-
+## Android release build
+Inside each app directory:
 ```bash
-cd apps/customer
-npm install
-npx expo start
+npx expo-doctor
+npx expo prebuild --clean --platform android
+cd android
+./gradlew --no-daemon :app:assembleRelease
 ```
+Expected output: `android/app/build/outputs/apk/release/app-release.apk`.
 
-### Employee app
-
+## Verify locally
+From repository root (Android SDK env configured):
 ```bash
-cd apps/employee
-npm install
-npx expo start
+bash scripts/verify-apk.sh apps/customer/android/app/build/outputs/apk/release/app-release.apk com.carshers.customer 101
+bash scripts/verify-apk.sh apps/employee/android/app/build/outputs/apk/release/app-release.apk com.carshers.employee 101
 ```
+The verifier checks bundle, signature, package, versionCode and debuggable status and writes a SHA-256 file.
 
-## GitHub setup
+## Download GitHub artifacts
+1. Open https://github.com/carsherss/app and select **Actions**.
+2. Open the Customer or Employee Android Release APK workflow.
+3. Select a completed run and scroll to **Artifacts**.
+4. Download `carshers-customer-0.1.1-release-apk` or `carshers-employee-0.1.1-release-apk`.
+5. Extract the artifact ZIP; it contains the APK and `.sha256` checksum.
 
-1. Download and extract this starter.
-2. Copy its contents into the root of `carsherss/app`.
-3. Commit and push to `main` or preferably a setup branch and open a pull request.
-4. In GitHub, open **Settings → Actions → General** and allow the repository's workflows to run.
-5. Run **Actions → Customer Android APK** and **Actions → Employee Android APK**.
-6. Download the debug APK artifact from a successful workflow run.
-7. Install it on a test Android phone. You may need to allow installation from the browser/file manager that opened the APK.
+## Signing
+v0.1.1 uses generated debug-style signing for internal testing only. It is not a production Play release. Production signing is deferred to v0.2.0.
 
-The APK workflows build **debug APKs for internal testing**. Do not distribute these as production releases. A production release workflow must use a protected signing key stored in GitHub Actions secrets and a carefully controlled release process.
+## Docs
+- [BRAIN](BRAIN.md) · [ROADMAP](ROADMAP.md) · [CHANGELOG](CHANGELOG.md) · [VERIFY](VERIFY.md)
+- [Android release instructions](docs/release/ANDROID_RELEASE.md)
+- [Device acceptance checklist](docs/testing/DEVICE_TEST_v0.1.1.md)
+- [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
-## Security and production notes
-
-- Never commit `.env`, passwords, API keys, database URLs, signing keys, or keystore files.
-- The public repository should contain no real customer data.
-- The API currently exposes a health endpoint only. Do not use it to accept live bookings yet.
-- Before production, add authenticated roles and server-side authorization, PostgreSQL, Alembic migrations, validation, rate limiting, backups, monitoring, and tested recovery procedures.
-- Configure a real HTTPS API URL for mobile apps before deploying them to users.
+## License
+Proprietary — All Rights Reserved. Draft requires legal review. Third-party components remain under their own licenses.

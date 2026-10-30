@@ -1,40 +1,75 @@
-name: Customer Android APK
-
+name: CARSHERS Customer Android Release APK
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - "apps/customer/**"
+      - "scripts/**"
       - ".github/workflows/android-customer.yml"
-
 permissions:
   contents: read
-
+concurrency:
+  group: android-customer-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
-    name: Build customer debug APK
+    name: Build standalone customer APK
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: apps/customer
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Require committed lockfile
+        shell: bash
+        run: |
+          if [ ! -s package-lock.json ]; then
+            echo "::error::package-lock.json is missing. Run bash scripts/bootstrap-mobile.sh from repository root, then commit both lockfiles."
+            exit 1
+          fi
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "22.13.x"
+          cache: npm
+          cache-dependency-path: apps/customer/package-lock.json
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+      - name: TypeScript check
+        run: npm run typecheck
+      - name: Expo Doctor
+        run: npx expo-doctor
       - name: Generate Android project
-        run: npx expo prebuild --platform android --no-install
-      - name: Build debug APK
+        run: npx expo prebuild --clean --platform android
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Build release APK
         working-directory: apps/customer/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
-      - name: Upload APK
+          ./gradlew --no-daemon :app:assembleRelease
+      - name: Verify APK
+        working-directory: .
+        shell: bash
+        run: |
+          bash scripts/verify-apk.sh \
+            "apps/customer/android/app/build/outputs/apk/release/app-release.apk" \
+            "com.carshers.customer" "101"
+      # Generated debug-style signing is for internal testing only. Production
+      # upload-key signing via GitHub Secrets is intentionally deferred to v0.2.0.
+      - name: Upload APK and checksum
         uses: actions/upload-artifact@v4
         with:
-          name: carshers-customer-debug-apk
-          path: apps/customer/android/app/build/outputs/apk/debug/app-debug.apk
+          name: carshers-customer-0.1.1-release-apk
+          path: |
+            apps/customer/android/app/build/outputs/apk/release/app-release.apk
+            apps/customer/android/app/build/outputs/apk/release/app-release.apk.sha256
           if-no-files-found: error
           retention-days: 14
