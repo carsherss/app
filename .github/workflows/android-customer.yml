@@ -61,7 +61,7 @@ jobs:
         run: |
           bash scripts/verify-apk.sh \
             "apps/customer/android/app/build/outputs/apk/release/app-release.apk" \
-            "com.carshers.customer" "101"
+            "com.carshers.customer" "102"
       # Generated debug-style signing is for internal testing only. Production
       # upload-key signing via GitHub Secrets is intentionally deferred to v0.2.0.
       - name: Upload APK and checksum
