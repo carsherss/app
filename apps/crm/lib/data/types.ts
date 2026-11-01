@@ -1,0 +1,10 @@
+export type BookingStatus = "Requested" | "Confirmed" | "Assigned" | "In Progress" | "Completed" | "Cancelled";
+export type PaymentStatus = "Pending" | "Paid" | "Refunded";
+export type VehicleType = "Car" | "Bike";
+export type Customer = { id: string; name: string; phone: string; area: string; joined: string; bookings: number };
+export type Employee = { id: string; name: string; phone: string; area: string; status: "On duty" | "Available" | "Off duty"; rating: number; jobs: number };
+export type Service = { id: string; name: string; vehicle: VehicleType; duration: number; price: number; active: boolean };
+export type Booking = { id: string; customerId: string; employeeId: string | null; serviceId: string; date: string; slot: string; status: BookingStatus; amount: number; paymentStatus: PaymentStatus; area: string; vehicle: string };
+export type AuditEvent = { id: string; date: string; actor: string; action: string; target: string; detail: string };
+export type DemoData = { customers: Customer[]; employees: Employee[]; services: Service[]; bookings: Booking[]; audit: AuditEvent[] };
+export type DataSource = { load(): DemoData };

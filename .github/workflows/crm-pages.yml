@@ -1,0 +1,101 @@
+name: CRM Pages
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/crm/**"
+      - "scripts/check-crm-export.mjs"
+      - ".github/workflows/crm-pages.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/crm/**"
+      - "scripts/check-crm-export.mjs"
+      - ".github/workflows/crm-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crm-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build static CRM preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/crm/package-lock.json
+
+      - name: Verify lockfile exists
+        working-directory: apps/crm
+        run: |
+          if [ ! -f package-lock.json ]; then
+            echo "::error::CRM package-lock.json is missing."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        working-directory: apps/crm
+        run: npm ci
+
+      - name: Type-check CRM
+        working-directory: apps/crm
+        run: npx tsc --noEmit
+
+      - name: Build static export
+        working-directory: apps/crm
+        env:
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+        run: npx next build
+
+      - name: Validate static export
+        env:
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+        run: node scripts/check-crm-export.mjs apps/crm/out
+
+      - name: Configure Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: apps/crm/out
+
+      - name: Upload PR preview artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: carshers-crm-pages-preview
+          path: apps/crm/out
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
